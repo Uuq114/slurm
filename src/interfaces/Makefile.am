@@ -63,6 +63,8 @@ libcommon_interfaces_la_SOURCES =    \
 	mpi.h					\
 	node_features.c				\
 	node_features.h				\
+    npu.c                       \
+    npu.h                       \
 	prep.c					\
 	prep.h					\
 	priority.c				\
