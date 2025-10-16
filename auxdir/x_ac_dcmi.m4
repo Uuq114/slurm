@@ -8,76 +8,65 @@
 
 AC_DEFUN([X_AC_DCMI],
 [
-  func_check_path ()
-  {
-      AS_UNSET([ac_cv_header_dsmi_common_interface_h])
-      AS_UNSET([ac_cv_lib_drvdsmi_host_dsmi_init])
-      AC_CHECK_HEADER([dsmi_common_interface.h], [ac_dcmi_h=yes], [ac_dcmi_h=no])
-      AC_CHECK_LIB([drvdsmi_host], [dsmi_init], [ac_dcmi=yes], [ac_dcmi=no])
-  }
-
-  _x_ac_dcmi_dirs="/usr/local/Ascend/driver"
-  _x_ac_dcmi_libs="lib64/stub"
-
   AC_ARG_WITH(
     [dcmi],
-    AS_HELP_STRING(--with-dcmi=PATH, Specify path to Ascend DCMI installation),
-    [AS_IF([test "x$with_dcmi" != xno && test "x$with_dcmi" != xyes],
-           [_x_ac_dcmi_dirs="$with_dcmi"])])
+    AS_HELP_STRING([--without-dcmi], [Do not build Huawei Ascend NPU DCMI-related code]),
+    []
+  )
 
-  if [test "x$with_dcmi" = xno]; then
-     AC_MSG_NOTICE([support for dcmi disabled])
+  if test "x$with_dcmi" = xno; then
+    AC_MSG_WARN([support for dcmi disabled])
+    ac_dcmi_h=no
+    ac_dcmi_lib=no
   else
-
-    # Check if libdrvdsmi_host is already in the system paths
-    func_check_path
-
-    if [ test "$ac_dcmi" = "yes" && test "$ac_dcmi_h" = "yes" ]; then
-          # found in system path
-          dcmi_includes="-I/usr/local/Ascend/driver/include"
-          dcmi_libs="-ldrvdsmi_host"
-    else
-      # Try to find libdrvdsmi_host
-      for d in $_x_ac_dcmi_dirs; do
-        if [ ! test -d "$d" ]; then
-          continue
-        fi
-        for bit in $_x_ac_dcmi_libs; do
-          if [ ! test -d "$d/$bit" || ! test -d "$d/include" ]; then
-            continue
-          fi
-          _x_ac_dcmi_ldflags_save="$LDFLAGS"
-          _x_ac_dcmi_cppflags_save="$CPPFLAGS"
-          LDFLAGS="-L$d/$bit -ldrvdsmi_host"
-          CPPFLAGS="-I$d/include $CPPFLAGS"
-
-          func_check_path
-
-          LDFLAGS="$_x_ac_dcmi_ldflags_save"
-          CPPFLAGS="$_x_ac_dcmi_cppflags_save"
-          if [ test "$ac_dcmi" = "yes" && test "$ac_dcmi_h" = "yes" ]; then
-            dcmi_includes="-I$d/include"
-            break
-          fi
-        done
-        if [ test "$ac_dcmi" = "yes" && test "$ac_dcmi_h" = "yes" ]; then
-          break
-        fi
-      done
-    fi
-
-    if [ test "$ac_dcmi" = "yes" && test "$ac_dcmi_h" = "yes" ]; then
-      DCMI_CPPFLAGS="$dcmi_includes"
-      AC_DEFINE(HAVE_DCMI, 1, [Define to 1 if DCMI library found])
-    else
-      if test -z "$with_dcmi"; then
-        AC_MSG_WARN([unable to locate libdrvdsmi_host.so and/or dsmi_common_interface.h])
+    # 保存原始编译标志
+    cppflags_save="$CPPFLAGS"
+    
+    # 设置 DCMI 特定的头文件路径 - 包含两个路径
+    DCMI_CPPFLAGS="-I/usr/local/dcmi -I/usr/local/Ascend/driver/kernel/inc/driver"
+    
+    AC_MSG_CHECKING([for dcmi_interface_api.h])
+    CPPFLAGS="$DCMI_CPPFLAGS $CPPFLAGS"
+    AC_COMPILE_IFELSE(
+      [AC_LANG_PROGRAM([[#include <dcmi_interface_api.h>]], [[]])],
+      [ac_dcmi_h=yes],
+      [ac_dcmi_h=no]
+    )
+    CPPFLAGS="$cppflags_save"
+    AC_MSG_RESULT([$ac_dcmi_h])
+    
+    if test "$ac_dcmi_h" = "yes"; then
+      AC_MSG_CHECKING([for DCMI library])
+      
+      if test -f "/usr/local/dcmi/lib/libdcmi.so"; then
+        DCMI_CPPFLAGS="$DCMI_CPPFLAGS -I/usr/local/dcmi/include"
+        DCMI_LDFLAGS="-L/usr/local/dcmi/lib"
+        DCMI_LIBS="-ldcmi"
+        ac_dcmi_lib=yes
+        AC_MSG_RESULT([yes])
+      elif test -f "/usr/local/Ascend/driver/lib64/driver/libdrvdsmi_host.so"; then
+        DCMI_LDFLAGS="-L/usr/local/Ascend/driver/lib64/driver"
+        DCMI_LIBS="-ldrvdsmi_host"
+        ac_dcmi_lib=yes
+        AC_MSG_RESULT([yes])
       else
-        AC_MSG_ERROR([unable to locate libdrvdsmi_host.so and/or dsmi_common_interface.h])
+        ac_dcmi_lib=no
+        AC_MSG_RESULT([no])
+        AC_MSG_WARN([DCMI library not found in any known location])
       fi
+      
+      if test "$ac_dcmi_lib" = "yes"; then
+        AC_DEFINE([HAVE_DCMI], [1], [Define to 1 if DCMI library found])
+        AC_MSG_NOTICE([DCMI support enabled])
+      fi
+    else
+      AC_MSG_WARN([DCMI header not found in /usr/local/dcmi or /usr/local/Ascend/driver/kernel/inc/driver])
+      ac_dcmi_lib=no
     fi
-
-    AC_SUBST(DCMI_CPPFLAGS)
+    
+    AC_SUBST([DCMI_CPPFLAGS])
+    AC_SUBST([DCMI_LIBS])
+    AC_SUBST([DCMI_LDFLAGS])  # 👈 新增这一行！
   fi
-  AM_CONDITIONAL(BUILD_DCMI, test "$ac_dcmi" = "yes" && test "$ac_dcmi_h" = "yes")
+  AM_CONDITIONAL([BUILD_DCMI], [test "$ac_dcmi_h" = "yes" -a "$ac_dcmi_lib" = "yes"])
 ])

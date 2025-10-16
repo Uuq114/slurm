@@ -327,6 +327,57 @@ extern void gres_common_gpu_set_env(common_gres_env_t *gres_env)
 	}
 }
 
+extern void gres_common_npu_set_env(common_gres_env_t *gres_env)
+{
+	char *slurm_env_var;
+	uint64_t gres_cnt;
+
+	if (gres_env->is_job)
+		slurm_env_var = "SLURM_JOB_NPUS";
+	else
+		slurm_env_var = "SLURM_STEP_NPUS";
+
+	gres_env->prefix = "";
+
+	common_gres_set_env(gres_env);
+
+	/*
+	 * Set environment variables if GRES is found. Otherwise, unset
+	 * environment variables, since this means GRES is not allocated.
+	 * This is useful for jobs and steps that request --gres=none within an
+	 * existing job allocation with GRES.
+	 * Do not unset envs that could have already been set by an allocated
+	 * sharing GRES (GPU).
+	 *
+	 * NOTE: Use gres_env->bit_alloc to ensure SLURM_GPUS_ON_NODE is
+	 * correct with shared gres. Do not use gres_env->gres_cnt.
+	 */
+	gres_cnt = gres_env->bit_alloc ? bit_set_count(gres_env->bit_alloc) : 0;
+	if (gres_cnt) {
+		char *gpus_on_node = xstrdup_printf("%"PRIu64, gres_cnt);
+		env_array_overwrite(gres_env->env_ptr, "SLURM_NPUS_ON_NODE", gpus_on_node);
+		xfree(gpus_on_node);
+	} else if (!(gres_env->flags & GRES_INTERNAL_FLAG_PROTECT_ENV)) {
+		unsetenvp(*gres_env->env_ptr, "SLURM_NPUS_ON_NODE");
+	}
+
+	if (gres_env->global_list) {
+		env_array_overwrite(gres_env->env_ptr, slurm_env_var, gres_env->global_list);
+		xfree(gres_env->global_list);
+	} else if (!(gres_env->flags & GRES_INTERNAL_FLAG_PROTECT_ENV)) {
+		unsetenvp(*gres_env->env_ptr, slurm_env_var);
+	}
+
+	if (gres_env->local_list) {
+        if (gres_env->gres_conf_flags & GRES_CONF_ENV_DCMI)
+            env_array_overwrite(gres_env->env_ptr, "ASCEND_RT_VISIBLE_DEVICES", gres_env->local_list);
+		xfree(gres_env->local_list);
+	} else if (!(gres_env->flags & GRES_INTERNAL_FLAG_PROTECT_ENV)) {
+        if (gres_env->gres_conf_flags & GRES_CONF_ENV_DCMI)
+            unsetenvp(*gres_env->env_ptr, "ASCEND_RT_VISIBLE_DEVICES");
+	}
+}
+
 /*
  * Set environment variables as appropriate for a job's prolog or epilog based
  * GRES allocated to the job.
@@ -403,6 +454,10 @@ extern bool gres_common_prep_set_env(char ***prep_env_ptr,
 			env_array_overwrite(prep_env_ptr,
 					    "GPU_DEVICE_ORDINAL",
 					    vendor_gpu_str);
+        if (gres_conf_flags & GRES_CONF_ENV_DCMI)
+            env_array_overwrite(prep_env_ptr,
+                        "ASCEND_RT_VISIBLE_DEVICES",
+                        vendor_gpu_str);
 		xfree(vendor_gpu_str);
 	}
 	if (slurm_gpu_str) {
@@ -427,6 +482,8 @@ extern int gres_common_set_env_types_on_node_flags(void *x, void *arg)
 		*node_flags |= GRES_CONF_ENV_OPENCL;
 	if (gres_slurmd_conf->config_flags & GRES_CONF_ENV_ONEAPI)
 		*node_flags |= GRES_CONF_ENV_ONEAPI;
+    if (gres_slurmd_conf->config_flags & GRES_CONF_ENV_DCMI)
+        *node_flags |= GRES_CONF_ENV_DCMI;
 
 	/* No need to continue if all are set */
 	if ((*node_flags & GRES_CONF_ENV_SET) == GRES_CONF_ENV_SET)

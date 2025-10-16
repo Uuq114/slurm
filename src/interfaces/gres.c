@@ -1327,6 +1327,8 @@ static char *_get_autodetect_flags_str(void)
 			xstrfmtcat(flags, "%snvidia", flags ? "," : "");
 		else if (autodetect_flags & GRES_AUTODETECT_GPU_OFF)
 			xstrfmtcat(flags, "%soff", flags ? "," : "");
+        else if (autodetect_flags & GRES_AUTODETECT_NPU_DCMI)
+            xstrfmtcat(flags, "%sdcmi", flags ? "," : "");
 	}
 
 	return flags;
@@ -1349,6 +1351,8 @@ static uint32_t _handle_autodetect_flags(char *str)
 		flags |= GRES_AUTODETECT_GPU_NVIDIA;
 	else if (!xstrcasecmp(str, "off"))
 		flags |= GRES_AUTODETECT_GPU_OFF;
+    else if (!xstrcasecmp(str, "dcmi"))
+        flags |= GRES_AUTODETECT_NPU_DCMI;
 	else
 		error("unknown autodetect flag '%s'", str);
 
@@ -1549,6 +1553,8 @@ extern uint32_t gres_flags_parse(char *input, bool *no_gpu_env,
 		flags |= GRES_CONF_ONE_SHARING;
 	if (xstrcasestr(input, "explicit"))
 		flags |= GRES_CONF_EXPLICIT;
+    if (xstrcasestr(input, "ascend_npu_env"))
+        flags |= GRES_CONF_ENV_DCMI;
 	/* String 'no_gpu_env' will clear all GPU env vars */
 	if (no_gpu_env)
 		*no_gpu_env = xstrcasestr(input, "no_gpu_env");
@@ -2643,6 +2649,9 @@ static int _load_specific_gres_plugins(void)
 
 	if ((rc = gpu_plugin_init()) != SLURM_SUCCESS)
 		return rc;
+
+    if ((rc = npu_plugin_init()) != SLURM_SUCCESS)
+        return rc;
 
 	return rc;
 }
