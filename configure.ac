@@ -246,6 +246,7 @@ X_AC_HWLOC
 X_AC_NVML
 X_AC_RSMI
 X_AC_ONEAPI
+X_AC_DCMI
 X_AC_PMIX
 X_AC_FREEIPMI
 X_AC_UCX
@@ -475,6 +476,7 @@ AC_CONFIG_FILES([Makefile
 		 src/plugins/gres/common/Makefile
 		 src/plugins/gres/gpu/Makefile
 		 src/plugins/gres/mps/Makefile
+         src/plugins/gres/npu/Makefile
 		 src/plugins/gres/nic/Makefile
 		 src/plugins/gres/shard/Makefile
 		 src/plugins/hash/Makefile
@@ -518,6 +520,9 @@ AC_CONFIG_FILES([Makefile
 		 src/plugins/node_features/Makefile
 		 src/plugins/node_features/helpers/Makefile
 		 src/plugins/node_features/knl_generic/Makefile
+         src/plugins/npu/Makefile
+         src/plugins/npu/dcmi/Makefile
+         src/plugins/npu/generic/Makefile
 		 src/plugins/preempt/Makefile
 		 src/plugins/preempt/partition_prio/Makefile
 		 src/plugins/preempt/qos/Makefile
