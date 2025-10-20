@@ -1535,7 +1535,7 @@ extern void gres_get_autodetected_npus(node_config_load_t node_conf, char **firs
 		if (!gres_str)
 			continue;
 
-		if (autodetect_flags == GRES_AUTODETECT_NPU_DCMI
+		if (autodetect_flags == GRES_AUTODETECT_NPU_DCMI)
 			i++; /* Skip if DCMI finds npus */
 
 		autodetect_option_name = _get_autodetect_flags_str();
