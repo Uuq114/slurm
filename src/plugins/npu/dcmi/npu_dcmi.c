@@ -143,7 +143,7 @@ static int _dcmi_init(void) {
 static list_t* _get_system_npu_list_dcmi(node_config_load_t* node_config) {
     list_t* npu_list = list_create(destroy_gres_slurmd_conf);
     uint32_t device_count = 0;
-    char chip_full_name[64];
+    struct dcmi_chip_info chip_info;
     int rc;
 
     _dcmi_init();
@@ -155,14 +155,11 @@ static list_t* _get_system_npu_list_dcmi(node_config_load_t* node_config) {
     }
     info("Detected NPU count: %u", device_count);
     // get device type
-    struct dcmi_chip_info chip_info;
     rc = dcmi_get_device_chip_info(0, 0, &chip_info);  // assume this is a homogeneous node
     if (rc != DCMI_OK) {
         error("DCMI get device chip info failed, rc=%d, msg=%s", rc, _dcmi_strerror(rc));
         return npu_list;
     }
-    xstrfmtcat(chip_full_name, sizeof(chip_full_name), "%s-%s", chip_info.chip_type, chip_info.chip_name);
-    debug3("Detected NPU type: %s", chip_full_name);
     // loop to get each device info
     for (uint32_t i = 0; i < device_count; i++) {
         char dev_path[32];
@@ -171,7 +168,7 @@ static list_t* _get_system_npu_list_dcmi(node_config_load_t* node_config) {
             .config_flags = GRES_CONF_ENV_DCMI | GRES_CONF_AUTODETECT,
             .count = 1,
             .name = "npu",
-            .type_name = xstrdup(chip_full_name),
+            .type_name = xstrfmt("%s-%s", chip_info.chip_type, chip_info.chip_name),
             .cpu_cnt = node_config->cpu_cnt,
             .file = xstrdup(dev_path),
         };
