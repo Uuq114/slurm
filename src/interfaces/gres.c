@@ -1506,6 +1506,54 @@ extern void gres_get_autodetected_gpus(node_config_load_t node_conf,
 	}
 }
 
+extern void gres_get_autodetected_npus(node_config_load_t node_conf, char **first_gres_str, char **autodetect_str)
+{
+	list_t *gres_list_system = NULL, *gres_list_merged = NULL;
+
+	char *gres_str = NULL;
+	char *autodetect_option_name = NULL;
+
+	int autodetect_options[] = {
+		GRES_AUTODETECT_NPU_DCMI,
+		GRES_AUTODETECT_UNSET /* For loop is done */
+	};
+
+	for (int i = 0; autodetect_options[i] != GRES_AUTODETECT_UNSET; i++) {
+		autodetect_flags = autodetect_options[i];
+		if (npu_plugin_init() != SLURM_SUCCESS)
+			continue;
+		gres_list_system = npu_g_get_system_npu_list(&node_conf);
+		if (gres_list_system) {
+			gres_list_merged = list_create(NULL);
+			list_for_each(gres_list_system, _merge_by_type, gres_list_merged);
+			list_for_each(gres_list_merged, _slurm_conf_gres_str, &gres_str);
+		}
+		FREE_NULL_LIST(gres_list_merged);
+		FREE_NULL_LIST(gres_list_system);
+		npu_plugin_fini();
+
+		if (!gres_str)
+			continue;
+
+		if (autodetect_flags == GRES_AUTODETECT_NPU_DCMI
+			i++; /* Skip if DCMI finds npus */
+
+		autodetect_option_name = _get_autodetect_flags_str();
+		xstrfmtcat(*autodetect_str, "%sFound %s with Autodetect=%s (Substring of npu name may be used instead)",
+			   (*autodetect_str ? "\n" : ""),
+			   gres_str,
+			   autodetect_option_name);
+		xfree(autodetect_option_name);
+
+		if (!*first_gres_str){
+			*first_gres_str = gres_str;
+			gres_str = NULL;
+		} else {
+			xfree(gres_str);
+		}
+	}
+}
+
 /*
  * Check to see if current GRES record matches the name of the previous GRES
  * record that set env flags.

@@ -1026,6 +1026,10 @@ extern void gres_get_autodetected_gpus(node_config_load_t node_conf,
                                        char** first_gres_str,
                                        char** autodetect_str);
 
+extern void gres_get_autodetected_npus(node_config_load_t node_conf,
+                                       char** first_gres_str,
+                                       char** autodetect_str);
+
 extern uint32_t gres_get_autodetect_flags(void);
 
 /* Convert the major/minor info to a string */
