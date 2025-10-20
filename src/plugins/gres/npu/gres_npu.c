@@ -157,6 +157,11 @@ static int _find_type_in_gres_list(void* x, void* key) {
 
     xassert(gres_slurmd_conf->count == 1);
 
+    if (!sys_gres_type) {
+        debug3("gres/npu: _find_type_in_gres_list(): no sys_gres_type specified, defaulting to %s", gres_slurmd_conf->type_name);
+        return 1;
+    }
+
     if (xstrcasestr(sys_gres_type, gres_slurmd_conf->type_name))
         return 1;
     else
@@ -335,7 +340,7 @@ static int _sort_npu_by_links_order(void* x, void* y) {
 // split gres.conf list into single records
 // match recprds with system devices
 // merge valid records into unified list
-extern int _merge_system_gres_conf(list_t* gres_list_conf, list_t* gres_list_system) {
+extern void _merge_system_gres_conf(list_t* gres_list_conf, list_t* gres_list_system) {
     list_itr_t *itr, *itr2;
     gres_slurmd_conf_t *gres_slurmd_conf, *gres_slurmd_conf_sys;
     list_t *gres_list_conf_single, *gres_list_npu = NULL, *gres_list_non_npu;
@@ -697,7 +702,7 @@ extern gres_prep_t* gres_p_prep_build_env(gres_job_state_t* gres_js) {
 
 // set environment variables for a job's prolog or epilog based GRES allocated to the job
 extern void gres_p_prep_set_env(char*** prep_env_ptr, gres_prep_t* gres_prep, int node_inx) {
-    (void)gres_common_prep_set_env(prep_env_ptr, gres_prep, node_inx, node_flags, gres_devices);    // TODO: do we need reimplement this for NPU?
+    (void)gres_common_prep_set_env(prep_env_ptr, gres_prep, node_inx, node_flags, gres_devices);  // TODO: do we need reimplement this for NPU?
 }
 
 /************************************* TAINTED ************************************* */
