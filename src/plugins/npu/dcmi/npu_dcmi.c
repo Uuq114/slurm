@@ -158,7 +158,7 @@ static list_t* _get_system_npu_list_dcmi(node_config_load_t* node_config) {
         char dev_path[20];
         snprintf(dev_path, sizeof(dev_path), "/dev/davinci%u", i);
         gres_slurmd_conf_t npu_conf = {
-            .config_flags = GRES_CONF_ENV_DCMI,  // TODO: add this var
+            .config_flags = GRES_CONF_ENV_DCMI | GRES_CONF_AUTODETECT,  // TODO: add this var
             .count = 1,
             .name = "npu",
             .cpu_cnt = node_config->cpu_cnt,

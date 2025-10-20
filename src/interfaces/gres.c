@@ -11081,6 +11081,12 @@ extern char *gres_flags2str(uint32_t config_flags)
 		sep = ",";
 	}
 
+    if (config_flags & GRES_CONF_ENV_DCMI) {
+        strcat(flag_str, sep);
+        strcat(flag_str, "ENV_DCMI");
+        sep = ",";
+    }
+
 	return flag_str;
 }
 
