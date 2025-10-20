@@ -613,7 +613,7 @@ extern int gres_p_node_config_load(list_t* gres_conf_list, node_config_load_t* n
 }
 
 // set environment variables for job (i.e. all tasks) based on job's GRES
-extern void gres_p_job_set_env(char*** job_env_ptr, bitstr_t* gres_bit_alloc, uint64_t gres_cnt, bitstr_t* usable_gres, gres_internal_flags_t flags) {
+extern void gres_p_job_set_env(char*** job_env_ptr, bitstr_t* gres_bit_alloc, uint64_t gres_cnt, gres_internal_flags_t flags) {
     common_gres_env_t gres_env = {
         .bit_alloc = gres_bit_alloc,
         .env_ptr = job_env_ptr,
@@ -622,14 +622,13 @@ extern void gres_p_job_set_env(char*** job_env_ptr, bitstr_t* gres_bit_alloc, ui
         .gres_conf_flags = node_flags,  // node_flags has env info
         .gres_devices = gres_devices,
         .is_job = true,
-        .usable_gres = usable_gres,
     };
 
     gres_common_npu_set_env(&gres_env);
 }
 
 // set environment variables for step (i.e. all tasks) base on job step's GRES
-extern void gres_p_step_set_env(char*** step_env_ptr, bitstr_t* gres_bit_alloc, uint64_t gres_cnt, bitstr_t* usable_gres, gres_internal_flags_t flags) {
+extern void gres_p_step_set_env(char*** step_env_ptr, bitstr_t* gres_bit_alloc, uint64_t gres_cnt, gres_internal_flags_t flags) {
     common_gres_env_t gres_env = {
         .bit_alloc = gres_bit_alloc,
         .env_ptr = step_env_ptr,
@@ -637,7 +636,6 @@ extern void gres_p_step_set_env(char*** step_env_ptr, bitstr_t* gres_bit_alloc, 
         .gres_cnt = gres_cnt,
         .gres_conf_flags = node_flags,  // node_flags has env info
         .gres_devices = gres_devices,
-        .usable_gres = usable_gres,
     };
 
     gres_common_npu_set_env(&gres_env);
