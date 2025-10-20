@@ -1697,6 +1697,7 @@ _print_config(void)
 	/* Use default_plugin_path here to avoid reading slurm.conf */
 	slurm_conf.plugindir = xstrdup(default_plugin_path);
 	gres_get_autodetected_gpus(node_conf, &gres_str, &autodetect_str);
+    gres_get_autodetected_npus(node_conf, &gres_str, &autodetect_str);
 
 	get_memory(&conf->physical_memory_size);
 
